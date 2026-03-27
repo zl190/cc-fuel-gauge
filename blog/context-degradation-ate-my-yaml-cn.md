@@ -30,9 +30,9 @@ System prompt 明确写了 "You are a YAML generator. You output ONLY valid YAML
 
 ## 诊断：三个机制
 
-我正好在写一篇关于 context window 降质的论文，提出了一个三机制框架。这次的 bug 完美地撞上了其中两个。
+我正好在写一篇关于 context window 降质的论文，提出了一个三机制假说。这次的 bug 的表现与其中两个机制的预测一致。
 
-**机制一：Softmax attention dilution。** 自注意力的 softmax 分布，随着 token 数增长，entropy 以 Theta(log n) 的速度增加。通俗说：token 越多，注意力越分散。6.4K tokens 不算多，但对 Haiku 来说，已经够让 system prompt 里的关键指令被稀释了。Du et al. (2025) 做过一个实验：光是用 attention mask 填充 padding tokens（不含任何实际信息），就能让 HumanEval 成绩掉 50%。绝对 token 数本身就有毒。
+**机制一：Softmax attention dilution。** 在该假说框架下，自注意力的 softmax 分布随着 token 数增长，entropy 以 Theta(log n) 的速度增加。通俗说：token 越多，注意力越分散。6.4K tokens 不算多，但对 Haiku 来说，已经够让 system prompt 里的关键指令被稀释了。Nakanishi (2025)、Vasylenko (2025)、Li (2025) 等研究从不同角度提供了这一效应的证据。绝对 token 数本身就有毒。
 
 **机制二：Lost-in-the-Middle。** Liu et al. (2023) 发现的经典效应。模型对 context 开头和结尾的信息注意力最强，中间的信息最容易丢。我的 prompt 结构是这样的：
 
@@ -43,7 +43,9 @@ System prompt 明确写了 "You are a YAML generator. You output ONLY valid YAML
 
 Schema 在 system prompt 里，transcript 在 user message 中间。经典的 U 型曲线中间低谷——schema 正好落在注意力最弱的位置。Veseli et al. (2025) 进一步证明了这个 U 型曲线的形状随 context 填充比例缩放，不是固定的。
 
-两个机制叠加，Haiku 对 "你是 YAML 生成器" 这条指令的感知能力大幅下降。transcript 里充斥着对话内容，对模型来说，"续写对话" 是一个比 "执行 schema 生成" 更强的先验。于是它跟着 transcript 的惯性走了。
+两个机制叠加，Haiku 对 "你是 YAML 生成器" 这条指令的遵循程度大幅下降。transcript 里充斥着对话内容，对模型来说，"续写对话" 是一个比 "执行 schema 生成" 更强的先验。于是它跟着 transcript 的惯性走了。
+
+值得一提的是，Du et al. (2025) 的实验结果在该假说框架下属于第三类机制（positional distance effects）的证据：他们用 attention mask 将 distractor tokens 排除出 softmax 计算，发现性能仍然退化——这说明退化不来自 softmax dilution，而来自 positional distance 本身。
 
 ### 替代解释
 
@@ -113,7 +115,7 @@ After:
 
 我做的工具是用来监控 context 降质的。这个工具的核心功能——自动生成 handoff 文档——被 context 降质搞崩了。修复它的理论依据，来自我正在写的那篇论文。
 
-论文的核心论点是：context degradation 不是一个单一现象，而是三个不同机制的叠加，每个机制有不同的 scaling variable。这个 bug 是前两个机制在真实场景下的活体演示。
+论文的核心假说是：context degradation 可能不是一个单一现象，而是三个不同机制叠加的结果，每个机制有不同的 scaling variable。这个 bug 是前两个机制在真实场景下的活体演示。
 
 如果我没在写这篇论文，大概率会在 prompt 措辞上反复调整——加粗、重复、换说法。但因为脑子里有这个框架，直接定位到了问题的物理层面：不是措辞不够强，是信息放错了位置。
 
@@ -127,6 +129,8 @@ After:
 
 **绝对 token 数才是关键，不是百分比。** 6.4K tokens 在 200K 的窗口里只占 3%，看起来毫无压力。但绝对数量已经够让模型丢失 system prompt 的约束了。别看百分比，看绝对值。
 
+**把可变内容（如 transcript）夹在固定指令之间** — 开头给角色定义，末尾给 schema 和输出指令。
+
 ---
 
 *References:*
@@ -134,4 +138,4 @@ After:
 - Liu et al. (2023). "Lost in the Middle: How Language Models Use Long Contexts." arXiv:2307.03172
 - Veseli et al. (2025). "Positional Biases Shift with Context Length." arXiv:2508.07479
 
-*cc-fuel-gauge: github.com/your-username/cc-fuel-gauge*
+*cc-fuel-gauge: github.com/zl190/cc-fuel-gauge*
