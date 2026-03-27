@@ -58,6 +58,25 @@ fmt_tokens() {
 TOKENS_USED_FMT=$(fmt_tokens "$TOKENS_USED")
 WINDOW_SIZE_FMT=$(fmt_tokens "$WINDOW_SIZE")
 
+# --- Auto-scale thresholds based on window size ---
+# If user hasn't set explicit thresholds in config, scale with window size.
+# Rationale: 30K/50K defaults are calibrated for 128K-window models (NoLiMa data).
+# 1M-window models (e.g., Opus 4.6) have stronger long-context training and
+# degrade more slowly (MRCR: 93% at 256K, 78% at 1M).
+# See: notes/literature-review.md for full evidence.
+if [ "$CFG_SOFT" -eq "$DEFAULT_SOFT_THRESHOLD" ] && [ "$CFG_HARD" -eq "$DEFAULT_HARD_THRESHOLD" ]; then
+  if [ "$WINDOW_SIZE" -gt 500000 ]; then
+    # 1M+ window: soft=80K, hard=200K
+    CFG_SOFT=80000
+    CFG_HARD=200000
+  elif [ "$WINDOW_SIZE" -gt 200000 ]; then
+    # 200K-500K window: soft=50K, hard=100K
+    CFG_SOFT=50000
+    CFG_HARD=100000
+  fi
+  # ≤200K: keep defaults (30K/50K)
+fi
+
 # --- Determine color based on threshold mode ---
 # Returns ANSI color escape code in $COLOR
 # Also sets ZONE for state export: "green", "yellow", "red"
