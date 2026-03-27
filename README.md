@@ -134,11 +134,13 @@ handoff:
 ## Roadmap
 
 - [x] Absolute threshold statusline
-- [x] YAML configuration
-- [ ] Auto-handoff via local model
-- [ ] Auto-handoff via API
+- [x] YAML configuration (zero-dependency parser)
+- [x] Auto-scaling thresholds by window size (NoLiMa/MRCR-calibrated)
+- [x] Input guard (graceful on empty/invalid JSON)
+- [x] State export to `/tmp/cc-fuel-gauge-state.json`
+- [ ] Auto-handoff via local model (code exists, integration pending)
+- [ ] Auto-handoff via API (code exists, integration pending)
 - [ ] tmux statusline integration
-- [ ] Token count history / trend display
 
 ## License
 
