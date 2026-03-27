@@ -31,9 +31,22 @@ mkdir -p "$CONFIG_DIR"
 
 # --- Copy files ---
 cp "${REPO_DIR}/statusline.sh" "${INSTALL_DIR}/statusline.sh"
-cp "${REPO_DIR}/lib/defaults.sh" "${LIB_DIR}/defaults.sh"
-cp "${REPO_DIR}/lib/config.sh"   "${LIB_DIR}/config.sh"
 chmod +x "${INSTALL_DIR}/statusline.sh"
+
+# Core lib
+for f in defaults.sh config.sh handoff-trigger.sh; do
+  if [ -f "${REPO_DIR}/lib/${f}" ]; then
+    cp "${REPO_DIR}/lib/${f}" "${LIB_DIR}/${f}"
+    chmod +x "${LIB_DIR}/${f}"
+  fi
+done
+
+# Python pipeline (handoff + transcript reader + brief renderer)
+for f in local-handoff.py api-handoff.sh transcript_reader.py render-brief.py; do
+  if [ -f "${REPO_DIR}/lib/${f}" ]; then
+    cp "${REPO_DIR}/lib/${f}" "${LIB_DIR}/${f}"
+  fi
+done
 
 info "Installed statusline.sh to ${INSTALL_DIR}/"
 info "Installed lib/ to ${LIB_DIR}/"

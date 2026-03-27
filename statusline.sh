@@ -176,6 +176,14 @@ cat > "$STATE_FILE" <<JSONEOF
 }
 JSONEOF
 
+# --- Auto-handoff trigger ---
+# When zone is red and handoff hasn't fired this session, trigger background handoff
+HANDOFF_TRIGGER="${SCRIPT_DIR}/lib/handoff-trigger.sh"
+HANDOFF_LOCK="/tmp/cc-fuel-gauge-handoff-${SESSION_ID}.lock"
+if [ "$ZONE" = "red" ] && [ -f "$HANDOFF_TRIGGER" ] && [ ! -f "$HANDOFF_LOCK" ]; then
+  nohup bash "$HANDOFF_TRIGGER" >/dev/null 2>&1 &
+fi
+
 # --- Render output ---
 if [ "$CFG_COMPACT" = "true" ]; then
   # Compact: [████░░░░] 50K/1M
