@@ -26,6 +26,12 @@ load_config
 # --- Read JSON input from Claude Code ---
 input=$(cat)
 
+# Guard: bail silently on empty or non-JSON input
+if [ -z "$input" ] || ! echo "$input" | jq empty 2>/dev/null; then
+  printf "\033[90m[cc-fuel-gauge] no input\033[0m"
+  exit 0
+fi
+
 MODEL=$(echo "$input" | jq -r '.model.display_name // "unknown"')
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 COST=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
@@ -38,7 +44,8 @@ TOKENS_USED=$(( WINDOW_SIZE * PCT / 100 ))
 
 # --- Format token count as human-readable ---
 fmt_tokens() {
-  local n=$1
+  local n=${1:-0}
+  [ -z "$n" ] && n=0
   if [ "$n" -ge 1000000 ]; then
     printf "%.1fM" "$(echo "scale=1; $n / 1000000" | bc)"
   elif [ "$n" -ge 1000 ]; then

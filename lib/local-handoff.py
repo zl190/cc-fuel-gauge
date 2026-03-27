@@ -199,6 +199,9 @@ def generate_handoff_yaml(
     context_pct = state.get("percentage", 0)
     model_in_use = state.get("model", "unknown")
 
+    # IMPORTANT: Schema goes at END of user message, not in system prompt.
+    # Verified in A/B test (Decision #7): 0/3 valid with schema in system prompt,
+    # 3/3 valid with schema at end of user message (recency bias).
     user_prompt = f"""Analyze this Claude Code conversation transcript and generate a handoff.yaml.
 
 Context:
@@ -215,12 +218,14 @@ Conversation transcript (most recent messages, truncated):
 {transcript}
 ---
 
+{HANDOFF_SCHEMA_PROMPT}
+
 Generate the handoff.yaml now. Output ONLY valid YAML, no markdown fences."""
 
     response = client.chat.completions.create(
         model=model_name,
         messages=[
-            {"role": "system", "content": HANDOFF_SCHEMA_PROMPT},
+            {"role": "system", "content": "You are a YAML generator. Output ONLY valid YAML. No markdown fences, no explanation."},
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.3,
