@@ -2,8 +2,13 @@
 # Research-backed defaults from "Three Mechanisms, One Degradation" (2026)
 
 thresholds:
-  soft: 30000    # tokens — yellow zone, consider handoff
-  hard: 50000    # tokens — red zone, trigger handoff
+  # Auto-scaled by window size if not set explicitly:
+  #   ≤200K window: soft=30K, hard=50K  (NoLiMa-calibrated)
+  #   200K-500K:    soft=50K, hard=100K
+  #   1M+:          soft=80K, hard=200K  (MRCR/Chroma-calibrated)
+  # Uncomment below to override auto-scaling:
+  # soft: 30000    # tokens — yellow zone, consider handoff
+  # hard: 50000    # tokens — red zone, trigger handoff
   mode: absolute # absolute | ratio | auto
 
 # ratio mode thresholds (used when mode: ratio)

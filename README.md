@@ -44,13 +44,17 @@ The installer adds the statusline hook to your Claude Code configuration. Restar
 
 ## Default Thresholds
 
-| Zone | Default | Rationale |
-|------|---------|-----------|
-| **Green** | < 30K tokens | Architectural reasoning intact. Attention entropy low enough for multi-step plans. |
-| **Yellow** | 30K -- 50K tokens | Soft degradation begins. Attention entropy approaches ~10.3. Complex reasoning starts losing coherence. |
-| **Red** | > 50K tokens | Hard degradation. Handoff recommended. Retrieval accuracy for mid-context information drops significantly. |
+Thresholds auto-scale based on the model's context window size. Models trained on larger windows (e.g., Opus 4.6 at 1M) have stronger long-context training and degrade more slowly than 128K models.
 
-These are empirically-informed starting points, not sharp cliffs. Degradation is continuous and task-dependent -- a coding task may tolerate more context than a complex reasoning task. These defaults give you a reasonable starting point; you should tune them to your workflow and observe where quality drops for your specific use cases.
+| Window Size | Green | Yellow | Red | Evidence |
+|-------------|-------|--------|-----|----------|
+| ≤ 200K | < 30K | 30K–50K | > 50K | NoLiMa: 11/13 models < 50% at 32K |
+| 200K–500K | < 50K | 50K–100K | > 100K | Interpolated |
+| 1M+ | < 80K | 80K–200K | > 200K | MRCR: Opus 4.6 at 93% at 256K; Chroma: 30-60% gap on complex tasks |
+
+You can override auto-scaling by setting explicit thresholds in your config file.
+
+These are empirically-informed starting points, not sharp cliffs. Degradation is continuous and task-dependent -- a coding task may tolerate more context than a complex reasoning task. Tune to your workflow.
 
 ## Configuration
 
@@ -63,9 +67,9 @@ cc-fuel-gauge reads from `~/.config/cc-fuel-gauge/config.yaml`. If the file does
 #   auto     — absolute thresholds + additional warning at high ratios
 mode: absolute
 
-# Absolute thresholds (tokens)
-soft_threshold: 30000    # yellow zone
-hard_threshold: 50000    # red zone
+# Absolute thresholds (tokens) — auto-scaled by window size if omitted
+# soft_threshold: 30000    # yellow zone (uncomment to override)
+# hard_threshold: 50000    # red zone (uncomment to override)
 
 # Ratio thresholds (percentage, used when mode=ratio or mode=auto)
 ratio_soft: 50
