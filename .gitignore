@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.env
+.envrc
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+*.orig
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak
+*.log
+
+# Test runner artifacts (but NOT test results JSON — those are research record)
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Secrets / config overrides
+config.yaml
+!config.yaml.example

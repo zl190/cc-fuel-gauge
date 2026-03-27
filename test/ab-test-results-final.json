@@ -1,0 +1,69 @@
+{
+  "local": {
+    "method": "local",
+    "model": "Qwen3.5-4B-Q4_K_S",
+    "load_time_s": 4.7,
+    "runs": [
+      {
+        "run": 1,
+        "latency_s": 77.52,
+        "output_len": 2117,
+        "tokens_prompt": 14486,
+        "tokens_completion": 623,
+        "tok_per_s": 8.0,
+        "output_preview": "version: 2\nmeta:\n  project: \"context-degradation\"\n  session: 1\n  timestamp: \"2025-10-24T10:30:00Z\"\n  trigger: hard\n  context_pct: 84\n  model: \"Qwen3.5-4B-MLX\"\ncurrent_task:\n  description: \"Investigate whether LLM context degradation scales with absolute token count or ratio\"\n  status: \"in_progress\"\n  progress: \"Completed literature review and methodology design. A/B testing local vs API handoff generation.\"\n  next_step: \"Run local model handoff generation and compare latency/quality with Haiku A"
+      },
+      {
+        "run": 2,
+        "latency_s": 75.39,
+        "output_len": 2232,
+        "tokens_prompt": 14486,
+        "tokens_completion": 637,
+        "tok_per_s": 8.4,
+        "output_preview": "version: 2\nmeta:\n  project: \"context-degradation\"\n  session: 1\n  timestamp: \"2025-10-24T10:00:00Z\"\n  trigger: hard\n  context_pct: 84\n  model: \"Qwen3.5-4B-MLX\"\ncurrent_task:\n  description: \"Investigate whether context degradation scales with absolute token count or ratio\"\n  status: \"in_progress\"\n  progress: \"Completed literature review and methodology design. A/B testing local vs API handoff generation.\"\n  next_step: \"Run local model handoff generation and compare latency/quality with API baselin"
+      },
+      {
+        "run": 3,
+        "latency_s": 78.95,
+        "output_len": 2181,
+        "tokens_prompt": 14486,
+        "tokens_completion": 652,
+        "tok_per_s": 8.3,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: \"context-degradation\"\n  session: 1\n  timestamp: \"2025-10-24T12:00:00Z\"\n  trigger: hard\n  context_pct: 84\n  model: \"Qwen3.5-4B-MLX\"\ncurrent_task:\n  description: \"Investigate context degradation scaling with absolute token count vs ratio\"\n  status: \"in_progress\"\n  progress: \"Literature review complete; A/B testing local vs API handoff\"\n  next_step: \"Run local model handoff generation and compare latency/quality\"\n  attempted: [\"search literature\", \"search benchma"
+      }
+    ]
+  },
+  "api": {
+    "method": "api",
+    "model": "claude-haiku-4-5-20251001",
+    "runs": [
+      {
+        "run": 1,
+        "latency_s": 22.49,
+        "output_len": 7197,
+        "tokens_prompt": 17273,
+        "tokens_completion": 1997,
+        "cost_usd": 0.0218,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: 2025-01-16T14:32:00Z\n  trigger: hard\n  context_pct: 87\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Build cc-fuel-gauge side project and validate context degradation hypothesis via A/B testing local vs API handoff generation\n  status: in_progress\n  progress: 85% - core infrastructure done, awaiting local model A/B test results\n  next_step: Run Qwen3.5-4B A/B test against Haiku baseline, supplement blog pos"
+      },
+      {
+        "run": 2,
+        "latency_s": 18.63,
+        "output_len": 6185,
+        "tokens_prompt": 17273,
+        "tokens_completion": 1685,
+        "cost_usd": 0.0206,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: 2025-01-16T14:32:00Z\n  trigger: hard\n  context_pct: 87\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Build cc-fuel-gauge side project and validate context degradation hypothesis via A/B testing local vs API handoff generation\n  status: in_progress\n  progress: 85% - core infrastructure done, awaiting local model A/B test results\n  next_step: Run A/B test with Qwen3.5-4B via llama-cpp-python, compare latency "
+      },
+      {
+        "run": 3,
+        "latency_s": 16.96,
+        "output_len": 5443,
+        "tokens_prompt": 17273,
+        "tokens_completion": 1532,
+        "cost_usd": 0.0199,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: 2025-01-16T14:32:00Z\n  trigger: hard\n  context_pct: 87\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Build cc-fuel-gauge tool and validate context degradation hypothesis via A/B testing local vs API handoff generation\n  status: in_progress\n  progress: 85% - core infrastructure done, awaiting local model A/B test results\n  next_step: Run Qwen3.5-4B A/B test against Haiku baseline, integrate results into blog"
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+# cc-fuel-gauge configuration
+# Research-backed defaults from "Three Mechanisms, One Degradation" (2026)
+
+thresholds:
+  soft: 30000    # tokens — yellow zone, consider handoff
+  hard: 50000    # tokens — red zone, trigger handoff
+  mode: absolute # absolute | ratio | auto
+
+# ratio mode thresholds (used when mode: ratio)
+ratio_thresholds:
+  soft: 50   # percentage
+  hard: 75   # percentage
+
+# auto mode uses absolute thresholds + warns at high ratios
+auto_ratio_warn: 80  # additional warning when ratio exceeds this
+
+# Display
+show_tokens: true     # show (50K/1M) alongside percentage
+show_cost: true       # show session cost
+compact: false        # compact mode: just the bar + tokens
+
+# Handoff trigger
+handoff:
+  enabled: false       # auto-trigger handoff at hard threshold
+  method: local        # local | api
+  model: "qwen3.5-4b"  # for local method
+  api_model: "claude-haiku-4-5-20251001"  # for api method

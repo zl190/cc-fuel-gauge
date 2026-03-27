@@ -1,0 +1,36 @@
+{
+  "local": null,
+  "api": {
+    "method": "api",
+    "model": "claude-haiku-4-5-20251001",
+    "runs": [
+      {
+        "run": 1,
+        "latency_s": 21.24,
+        "output_len": 7127,
+        "tokens_prompt": 12718,
+        "tokens_completion": 2091,
+        "cost_usd": 0.0185,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: \"2025-01-16T14:32:00Z\"\n  trigger: hard\n  context_pct: 42\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Establish theoretical and empirical foundation for context window degradation research; build cc-fuel-gauge side project for monitoring and handoff automation\n  status: in_progress\n  progress: \"70% \u2014 theory complete, empirical survey done, cc-fuel-gauge core/README shipped, A/B testing handoff pipeline in "
+      },
+      {
+        "run": 2,
+        "latency_s": 16.67,
+        "output_len": 5303,
+        "tokens_prompt": 12718,
+        "tokens_completion": 1601,
+        "cost_usd": 0.0166,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: 2025-01-16T14:32:00Z\n  trigger: hard\n  context_pct: 78\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Build cc-fuel-gauge side project - statusline + handoff pipeline with local model integration\n  status: in_progress\n  progress: Core infrastructure 80% done (statusline.sh, config system, README). Handoff A/B test in progress.\n  next_step: Complete local model (Qwen3.5-4B) A/B test vs Haiku API, fix YAML val"
+      },
+      {
+        "run": 3,
+        "latency_s": 14.79,
+        "output_len": 4972,
+        "tokens_prompt": 12718,
+        "tokens_completion": 1535,
+        "cost_usd": 0.0163,
+        "output_preview": "```yaml\nversion: 2\nmeta:\n  project: context-degradation\n  session: 1\n  timestamp: 2025-01-16T00:00:00Z\n  trigger: hard\n  context_pct: 42\n  model: Claude Opus 4.6\ncurrent_task:\n  description: Build cc-fuel-gauge side project - statusline with absolute token thresholds and local model handoff pipeline\n  status: in_progress\n  progress: Core + README done, handoff pipeline in testing phase\n  next_step: A/B test Haiku API vs local Qwen3.5-4B for handoff YAML generation\n  attempted:\n    - Statusline c"
+      }
+    ]
+  }
+}
