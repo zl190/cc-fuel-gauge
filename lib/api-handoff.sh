@@ -46,7 +46,7 @@ load_config
 API_MODEL="${CFG_HANDOFF_API_MODEL:-claude-haiku-4-5-20251001}"
 
 # --- Read and truncate transcript ---
-TRANSCRIPT=$(uv run --python 3.12 python "${SCRIPT_DIR}/transcript-reader.py" "$TRANSCRIPT_PATH" 16000)
+TRANSCRIPT=$(uv run --python 3.12 python "${SCRIPT_DIR}/transcript_reader.py" "$TRANSCRIPT_PATH" 16000)
 if [ -z "$TRANSCRIPT" ]; then
   echo "Error: empty transcript" >&2
   exit 1
@@ -70,7 +70,13 @@ fi
 # --- Build the prompt ---
 SYSTEM_PROMPT='You are a session handoff assistant. Analyze a Claude Code conversation transcript and produce a structured handoff.yaml file.
 
-Read the conversation carefully and extract:
+STEP 1 — Analyze user messages by signal quality:
+User messages in the transcript are pre-tagged. Use these signal layers:
+- Untagged Human messages = high signal (task definitions, requirements, constraints, strategic decisions). PRESERVE the user'"'"'s exact words when extracting decisions and constraints.
+- [FUNC] tagged messages = functional (action-pushing, meta-instructions). Extract any IMPLICIT instruction, ignore framing/tone.
+- Noise messages have already been removed from the transcript.
+
+STEP 2 — Extract structured state from high-signal messages:
 1. What task was being worked on (current_task)
 2. Key decisions made (verified = explicitly confirmed, proposed = discussed but not confirmed, rejected = explicitly rejected)
 3. What files were created or modified (state_changes)
@@ -101,7 +107,8 @@ RULES:
 - Be specific in progress/next_step
 - Empty lists: []
 - Absent values: null
-- Only extract what the transcript actually contains'
+- Only extract what the transcript actually contains
+- QUOTE all string values that contain colons, e.g. evidence: "Benchmark: 20 items tested"'
 
 USER_PROMPT="Analyze this Claude Code conversation transcript and generate a handoff.yaml.
 
@@ -173,3 +180,13 @@ HANDOFF_PATH="${PROJECT_DIR}/handoff.yaml"
 printf '%s\n' "$YAML_OUTPUT" > "$HANDOFF_PATH"
 
 echo "Handoff written: ${HANDOFF_PATH}" >&2
+
+# --- Render three-layer output: brief.md + rationale.md ---
+RENDERER="${SCRIPT_DIR}/render-brief.py"
+if [ -f "$RENDERER" ]; then
+  if uv run --python 3.12 --with pyyaml python "$RENDERER" "$HANDOFF_PATH" 2>&1 >/dev/null; then
+    echo "Brief + rationale rendered" >&2
+  else
+    echo "Warning: brief rendering failed" >&2
+  fi
+fi

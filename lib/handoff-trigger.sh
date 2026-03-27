@@ -159,12 +159,11 @@ HANDOFF_EXIT=0
 
 case "$CFG_HANDOFF_METHOD" in
   local)
-    uv run --python 3.12 --with openai --with pyyaml python \
+    uv run --python 3.12 --with "llama-cpp-python>=0.3" --with pyyaml python \
       "${SCRIPT_DIR}/local-handoff.py" \
       --transcript "$TRANSCRIPT_PATH" \
       --project-dir "$PROJECT_DIR" \
       --state "$STATE_FILE" \
-      --model "$CFG_HANDOFF_MODEL" \
       || HANDOFF_EXIT=$?
     ;;
   api)
