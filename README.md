@@ -12,6 +12,8 @@ Every context window indicator you have seen shows a percentage. 20% used, 50% u
 
 cc-fuel-gauge is a Claude Code statusline plugin that uses empirically-informed absolute thresholds to tell you when context quality is likely dropping, and optionally triggers a handoff before it gets bad.
 
+Production systems have internal token monitoring (e.g., prompt cache break detection with 14 tracked vectors). cc-fuel-gauge gives you the same visibility from outside the black box.
+
 ## Why Absolute Thresholds
 
 Three mechanisms drive context degradation, and they scale differently:
@@ -127,9 +129,18 @@ handoff:
 
 ## Requirements
 
+**Required:**
+
 - **Claude Code** (the statusline hooks into its session)
-- **bash**, **jq** (standard on macOS/Linux)
-- (Optional) **LM Studio** + **Qwen3.5-4B** for local handoff generation
+- **bash** (v4+ recommended; v3.2 works on macOS)
+- **jq** (JSON processing for settings configuration)
+- **bc** (arithmetic for threshold calculations)
+
+**Optional (handoff features):**
+
+- **curl** (only for API handoff mode, i.e. `handoff.method: api`)
+- **uv** + **Python 3.12+** (runs handoff and transcript reader scripts)
+- **LM Studio** + **Qwen3.5-4B** (local handoff generation, no tokens leave your machine)
 
 ## Roadmap
 

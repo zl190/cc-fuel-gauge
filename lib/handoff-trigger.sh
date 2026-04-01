@@ -154,8 +154,36 @@ echo "  Method:     ${CFG_HANDOFF_METHOD}" >&2
 # --- Create lock file ---
 date -u +%Y-%m-%dT%H:%M:%SZ > "$LOCK_FILE"
 
-# --- Call the appropriate handoff method ---
+# --- PRIMARY PATH: Write signal file for in-band handoff skill ---
+# The handoff skill (running inside the CC session) produces higher-quality output
+# because it has full conversation context. Signal file is the contract between
+# fuel-gauge (sensor) and handoff skill (actuator).
+# See: docs/handoff-architecture.md
+SIGNAL_FILE="/tmp/cc-fuel-gauge-handoff-signal-${SESSION_ID}.json"
+TOKEN_COUNT=$(jq -r '.token_count // 0' "$STATE_FILE")
+CONTEXT_PCT=$(jq -r '.context_pct // 0' "$STATE_FILE")
+
+cat > "$SIGNAL_FILE" <<SIGNAL_EOF
+{
+  "trigger": "red_zone",
+  "session_id": "${SESSION_ID}",
+  "project_dir": "${PROJECT_DIR}",
+  "transcript_path": "${TRANSCRIPT_PATH}",
+  "token_count": ${TOKEN_COUNT},
+  "context_pct": ${CONTEXT_PCT},
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+SIGNAL_EOF
+
+echo "  Signal:     ${SIGNAL_FILE} (for in-band /handoff skill)" >&2
+
+# --- FALLBACK PATH: Generate crash-recovery handoff from .jsonl ---
+# This runs as insurance. If the session is still alive, the handoff skill will
+# produce the authoritative handoff.yaml (overwriting this one). If the session
+# dies before /handoff runs, this crash-recovery YAML is all we have.
 HANDOFF_EXIT=0
+
+echo "  Running fallback handoff (crash recovery)..." >&2
 
 case "$CFG_HANDOFF_METHOD" in
   local)
@@ -182,25 +210,26 @@ case "$CFG_HANDOFF_METHOD" in
 esac
 
 if [ "$HANDOFF_EXIT" -ne 0 ]; then
-  echo "Error: handoff generation failed (exit ${HANDOFF_EXIT})" >&2
-  # Remove lock so user can retry
-  rm -f "$LOCK_FILE"
-  exit 1
+  echo "Warning: fallback handoff generation failed (exit ${HANDOFF_EXIT})" >&2
+  echo "Signal file written — /handoff skill can still run in-band." >&2
+  # Don't remove lock — signal file is still valid
+  # Don't exit 1 — primary path (signal file) succeeded
 fi
 
-# --- Verify output ---
+# --- Verify fallback output ---
 HANDOFF_FILE="${PROJECT_DIR}/handoff.yaml"
-if [ ! -f "$HANDOFF_FILE" ]; then
-  echo "Error: handoff.yaml was not created at ${HANDOFF_FILE}" >&2
-  rm -f "$LOCK_FILE"
-  exit 1
+if [ -f "$HANDOFF_FILE" ]; then
+  echo "" >&2
+  echo "Handoff triggered:" >&2
+  echo "  Signal file:       ${SIGNAL_FILE} (primary — for /handoff skill)" >&2
+  echo "  Crash recovery:    ${HANDOFF_FILE} (fallback — if session dies)" >&2
+  echo "  Session:           ${SESSION_ID}" >&2
+  echo "" >&2
+  echo "If session is alive: /handoff will produce the authoritative handoff" >&2
+  echo "If session is dead:  ${HANDOFF_FILE} is the recovery artifact" >&2
+else
+  echo "" >&2
+  echo "Handoff signal written (no fallback YAML):" >&2
+  echo "  Signal file: ${SIGNAL_FILE}" >&2
+  echo "  Run /handoff in the active session to generate handoff.yaml" >&2
 fi
-
-echo "" >&2
-echo "Handoff complete:" >&2
-echo "  handoff.yaml: ${HANDOFF_FILE}" >&2
-echo "  Session:      ${SESSION_ID}" >&2
-echo "  Lock:         ${LOCK_FILE}" >&2
-echo "" >&2
-echo "Resume next session:" >&2
-echo "  read ${PROJECT_DIR}/RESUME.md then continue" >&2

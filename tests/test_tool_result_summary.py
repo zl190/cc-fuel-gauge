@@ -10,6 +10,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 LIB_DIR = Path(__file__).parent.parent / "lib"
 sys.path.insert(0, str(LIB_DIR))
 
@@ -30,23 +32,91 @@ _local_handoff = _load_module("local_handoff", LIB_DIR / "local-handoff.py")
 summarize_tool_results = _local_handoff.summarize_tool_results
 inject_summaries = _local_handoff.inject_summaries
 
-# Real .jsonl for integration tests
-REAL_JSONL = Path.home() / ".claude/projects/-Users-zl190-Developer-personal-context-degradation/3008fa98-cf3b-484e-bf01-6ae60de4a296.jsonl"
-
 REQUIRED_KEYS = {"tool_use_id", "tool_name", "tool_input", "content", "char_count"}
 SKIP_TOOLS = {"Edit", "Write", "TodoRead", "TodoWrite"}
+
+
+# ---------------------------------------------------------------------------
+# Minimal JSONL fixture (self-contained, no user-specific files needed)
+# ---------------------------------------------------------------------------
+
+# A minimal transcript with one tool_use (Read) and its tool_result.
+_FIXTURE_RECORDS = [
+    {
+        "type": "assistant",
+        "message": {
+            "content": [
+                {"type": "text", "text": "Let me read that file."},
+                {
+                    "type": "tool_use",
+                    "id": "toolu_fixture_001",
+                    "name": "Read",
+                    "input": {"file_path": "/tmp/example.py"},
+                },
+            ]
+        },
+    },
+    {
+        "type": "user",
+        "message": {
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "toolu_fixture_001",
+                    "content": "x" * 200,  # 200 chars, above the 100-char minimum
+                }
+            ]
+        },
+    },
+    {
+        "type": "assistant",
+        "message": {
+            "content": [
+                {"type": "text", "text": "I have read the file. Here is a summary."},
+                {
+                    "type": "tool_use",
+                    "id": "toolu_fixture_002",
+                    "name": "Bash",
+                    "input": {"command": "ls -la /tmp"},
+                },
+            ]
+        },
+    },
+    {
+        "type": "user",
+        "message": {
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "toolu_fixture_002",
+                    "content": "drwxr-xr-x  10 user  staff  320 Jan  1 00:00 .\n" * 5,  # >100 chars
+                }
+            ]
+        },
+    },
+]
+
+
+@pytest.fixture
+def fixture_jsonl(tmp_path):
+    """Write minimal JSONL fixture to a temp file, return its path."""
+    jsonl_file = tmp_path / "test_transcript.jsonl"
+    with open(jsonl_file, "w") as f:
+        for record in _FIXTURE_RECORDS:
+            f.write(json.dumps(record) + "\n")
+    return str(jsonl_file)
 
 
 # ---------------------------------------------------------------------------
 # 1. test_extract_tool_results
 # ---------------------------------------------------------------------------
 
-def test_extract_tool_results():
-    """Basic extraction from real .jsonl — non-empty, correct structure."""
-    results = extract_tool_results(str(REAL_JSONL))
+def test_extract_tool_results(fixture_jsonl):
+    """Basic extraction from fixture .jsonl — non-empty, correct structure."""
+    results = extract_tool_results(fixture_jsonl)
 
     assert isinstance(results, list), "extract_tool_results must return a list"
-    assert len(results) > 0, "Expected at least one tool_result in real transcript"
+    assert len(results) > 0, "Expected at least one tool_result in fixture transcript"
 
     for item in results:
         assert REQUIRED_KEYS == set(item.keys()), (
@@ -64,9 +134,9 @@ def test_extract_tool_results():
 # 2. test_filter_small_results
 # ---------------------------------------------------------------------------
 
-def test_filter_small_results():
+def test_filter_small_results(fixture_jsonl):
     """All returned results must have char_count >= 100."""
-    results = extract_tool_results(str(REAL_JSONL))
+    results = extract_tool_results(fixture_jsonl)
     for item in results:
         assert item["char_count"] >= 100
         assert item["char_count"] == len(item["content"])
@@ -119,9 +189,9 @@ def test_graceful_degradation():
 # 5. test_end_to_end_extraction_and_injection
 # ---------------------------------------------------------------------------
 
-def test_end_to_end_extraction_and_injection():
-    """Extract from real .jsonl, inject fake summaries, verify enrichment."""
-    results = extract_tool_results(str(REAL_JSONL))
+def test_end_to_end_extraction_and_injection(fixture_jsonl):
+    """Extract from fixture .jsonl, inject fake summaries, verify enrichment."""
+    results = extract_tool_results(fixture_jsonl)
     assert len(results) > 0
 
     tool_result = results[0]

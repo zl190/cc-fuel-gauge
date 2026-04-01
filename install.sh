@@ -9,6 +9,11 @@ INSTALL_DIR="${HOME}/.claude/scripts"
 CONFIG_DIR="${HOME}/.config/cc-fuel-gauge"
 LIB_DIR="${INSTALL_DIR}/lib"
 
+# --- Temp file cleanup ---
+_TMPFILES=()
+cleanup() { for f in "${_TMPFILES[@]}"; do rm -f "$f"; done; }
+trap cleanup EXIT
+
 # --- Colors ---
 GREEN="\033[32m"
 YELLOW="\033[33m"
@@ -62,22 +67,46 @@ else
   info "Updated config.yaml.example for reference"
 fi
 
-# --- Print setup instructions ---
+# --- Configure statusLine in Claude Code settings ---
+SETTINGS_FILE="${HOME}/.claude/settings.json"
+HOOK_COMMAND="${HOME}/.claude/scripts/statusline.sh"
+
+configure_statusline() {
+  # Requires jq
+  if ! command -v jq &>/dev/null; then
+    warn "jq not found — cannot auto-configure statusLine"
+    warn "Please manually add statusLine to ${SETTINGS_FILE}"
+    return 1
+  fi
+
+  # Create settings.json if missing
+  if [ ! -f "$SETTINGS_FILE" ]; then
+    echo '{}' > "$SETTINGS_FILE"
+    info "Created ${SETTINGS_FILE}"
+  fi
+
+  # Check if statusLine already configured
+  local existing
+  existing=$(jq -r '.statusLine.command // empty' "$SETTINGS_FILE" 2>/dev/null)
+
+  if [ "$existing" = "$HOOK_COMMAND" ]; then
+    info "statusLine already configured"
+    return 0
+  fi
+
+  # Add statusLine (top-level field, NOT a hook)
+  local tmp
+  tmp=$(mktemp)
+  _TMPFILES+=("$tmp")
+  jq '.statusLine = {"type": "command", "command": "'"$HOOK_COMMAND"'"}' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
+  info "Added statusLine to ${SETTINGS_FILE}"
+}
+
+configure_statusline
+
+# --- Print summary ---
 echo ""
 info "Installation complete!"
-echo ""
-echo "  To hook into Claude Code, ensure your ~/.claude/settings.json contains:"
-echo ""
-echo '    {'
-echo '      "hooks": {'
-echo '        "StatusLine": ['
-echo '          {'
-echo '            "type": "command",'
-echo '            "command": "~/.claude/scripts/statusline.sh"'
-echo '          }'
-echo '        ]'
-echo '      }'
-echo '    }'
 echo ""
 echo "  Configuration: ${CONFIG_DIR}/config.yaml"
 echo "  State export:  /tmp/cc-fuel-gauge-state.json"

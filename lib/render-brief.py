@@ -20,12 +20,26 @@ import sys
 from datetime import datetime
 
 
+def _strip_fences(text: str) -> str:
+    """Strip markdown fences (```yaml ... ```) from model output."""
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.split("\n")
+        lines = lines[1:]  # Remove opening fence line
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]  # Remove closing fence if present
+        cleaned = "\n".join(lines)
+    return cleaned
+
+
 def load_handoff(path: str) -> dict:
     """Load and parse handoff.yaml."""
     import yaml
 
     with open(path) as f:
-        data = yaml.safe_load(f)
+        raw = f.read()
+    raw = _strip_fences(raw)
+    data = yaml.safe_load(raw)
     if not isinstance(data, dict):
         raise ValueError(f"Expected YAML mapping, got {type(data).__name__}")
     return data

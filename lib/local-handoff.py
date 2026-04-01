@@ -293,17 +293,22 @@ def _fix_unquoted_colons(yaml_text: str) -> str:
             fixed_lines.append(line)
             continue
         # Match: `key: value` where value contains an unquoted colon
-        # But not already quoted, not a list item starting with -, not a nested mapping
         indent = len(line) - len(stripped)
-        if ": " in stripped and not stripped.startswith("- "):
-            first_colon = stripped.index(": ")
-            key = stripped[:first_colon]
-            value = stripped[first_colon + 2:]
+        # Handle list items: `- key: value: more` → extract after `- `
+        work = stripped
+        prefix = ""
+        if work.startswith("- "):
+            prefix = "- "
+            work = work[2:]
+        if ": " in work:
+            first_colon = work.index(": ")
+            key = work[:first_colon]
+            value = work[first_colon + 2:]
             # If value has another colon and isn't already quoted/a special YAML value
             if ":" in value and not value.startswith('"') and not value.startswith("'"):
                 if value not in ("null", "true", "false", "[]") and not value.startswith("{") and not value.startswith("|"):
                     value = '"' + value.replace('"', '\\"') + '"'
-                    line = " " * indent + key + ": " + value
+                    line = " " * indent + prefix + key + ": " + value
         fixed_lines.append(line)
     return "\n".join(fixed_lines)
 
@@ -477,8 +482,10 @@ def main():
     try:
         validated_yaml = validate_yaml(raw_yaml)
     except Exception as e:
-        print(f"Warning: YAML validation failed ({e}), writing raw output", file=sys.stderr)
-        validated_yaml = raw_yaml
+        print(f"Error: YAML validation failed ({e}), refusing to write invalid output", file=sys.stderr)
+        print("Falling back to API...", file=sys.stderr)
+        fallback_to_api(args.transcript, args.project_dir, args.state)
+        # fallback_to_api calls sys.exit(), execution does not reach here
 
     # Write handoff.yaml
     handoff_path = os.path.join(args.project_dir, "handoff.yaml")
